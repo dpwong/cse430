@@ -22,6 +22,10 @@ int __init wip_init(void)
 	struct task_struct *task;
 	int count = 0;
 	int i;
+	char no_tty[2];
+
+	no_tty[0] = '?';
+	no_tty[1] = '\0';
 
 	printk(KERN_ALERT "Inserted wip_mod\n");
 
@@ -34,10 +38,11 @@ int __init wip_init(void)
 		task_list[count].time_seconds = (cputime_to_jiffies(task->stime) + cputime_to_jiffies(task->utime)) / HZ;
 
 		if (task->signal->tty != NULL)
+		{
 			strcpy(task_list[count].tty_name, task->signal->tty->name);
+		}
 		else
-			strcpy(task_list[count].tty_name, "");
-
+			strcpy(task_list[count].tty_name, no_tty);
 		count++;
 	}
 	task = NULL;
