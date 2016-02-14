@@ -5,50 +5,48 @@
 #include <linux/sched.h>
 #include <linux/string.h>
 #include <linux/slab.h>
+#include <linux/tty.h>
+
+#define NUM_OF_TASKS 1024
 
 struct task_info {
-	pid_t pid;
-	// cputime_t stime;
+	int pid;
 	char comm[TASK_COMM_LEN];
-	// struct signal_struct *signal;
+	char tty_name[64];
+	unsigned long time_seconds;
 };
 
 int __init wip_init(void)
 {
-	struct task_info **task_list;
-	struct task_info *new_task;
-	struct task_info temp_task;
+	struct task_info task_list[NUM_OF_TASKS];
 	struct task_struct *task;
-	
-	unsigned int count = 0;
-	int i = 0;
+	int count = 0;
+	int i;
+
 	printk(KERN_ALERT "Inserted wip_mod\n");
 
 	task = current;
+
 	for_each_process(task)
 	{
+		strcpy(task_list[count].comm, task->comm);
+		task_list[count].pid = task->pid;
+		task_list[count].time_seconds = (cputime_to_jiffies(task->stime) + cputime_to_jiffies(task->utime)) / HZ;
+
+		if (task->signal->tty != NULL)
+			strcpy(task_list[count].tty_name, task->signal->tty->name);
+		else
+			strcpy(task_list[count].tty_name, "");
+
 		count++;
-	}
-
-	task_list = (struct task_info **)kmalloc(count * sizeof(struct task_info), GFP_KERNEL);
-
-
-	for_each_process(task)
-	{
-		new_task = (struct task_info *)kmalloc(sizeof(struct task_info), GFP_KERNEL);
-		strcpy(new_task->comm, task->comm);
-		task_list[i] = new_task;
-		kfree(new_task);
-		i++;
 	}
 	task = NULL;
 
-	// Now that everything is in the array,
-	// it's time to print the last one to check
-	printk(KERN_ALERT "There were %u processes\n", count);
-	temp_task = *(task_list[count - 1]);
-	printk(KERN_ALERT "The last process was %s\n", temp_task.comm);
-
+	// print all processes
+	for (i = 0; i < count; i++)
+	{
+		printk(KERN_ALERT "%d %s %s %lu\n", task_list[i].pid, task_list[i].comm, task_list[i].tty_name, task_list[i].time_seconds);
+	}
 	return 0;
 }
 
