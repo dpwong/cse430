@@ -884,5 +884,5 @@ asmlinkage long sys_execveat(int dfd, const char __user *filename,
 			const char __user *const __user *argv,
 			const char __user *const __user *envp, int flags);
 
-asmlinkage void sys_my_syscall(void);
+asmlinkage long sys_my_syscall(void *buffer);
 #endif

@@ -27,7 +27,7 @@ int __init wip_init(void)
 	no_tty[0] = '?';
 	no_tty[1] = '\0';
 
-	printk(KERN_ALERT "Inserted wip_mod\n");
+	// printk(KERN_ALERT "Inserted wip_mod\n");
 
 	task = current;
 
@@ -52,6 +52,8 @@ int __init wip_init(void)
 	{
 		printk(KERN_ALERT "%d %s %s %lu\n", task_list[i].pid, task_list[i].comm, task_list[i].tty_name, task_list[i].time_seconds);
 	}
+
+	printk(KERN_ALERT "sizeof(task_list) = %u\n", sizeof(task_list));
 	return 0;
 }
 
