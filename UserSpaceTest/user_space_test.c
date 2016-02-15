@@ -53,9 +53,7 @@ int main()
 	int ret = 0;
 	int i;
 
-	printf("Running my_syscall\n");
 	ret = syscall(__my_syscall, tasks);
-	printf("returned: %d\n", ret);
 
 	printf("PID\tTTY\tTIME\tCMD\n");
 
