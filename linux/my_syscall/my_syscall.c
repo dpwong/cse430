@@ -24,8 +24,6 @@ asmlinkage long sys_my_syscall(void *buffer)
 	int i;
 	char no_tty[2];
 
-	// printk(KERN_ALERT "This is the new system call Ahanuf Hossain implemeted.\n");
-
 	no_tty[0] = '?';
 	no_tty[1] = '\0';
 
@@ -47,14 +45,10 @@ asmlinkage long sys_my_syscall(void *buffer)
 	}
 	task = NULL;
 
-	// for (i = 0; i < count; i++)
-	// {
-	// 	printk(KERN_ALERT "%d %s %s %lu\n", task_list[i].pid, task_list[i].comm, task_list[i].tty_name, task_list[i].time_seconds);
-	// }
-
 	if (copy_to_user(buffer, (void *)task_list, sizeof(task_list)) > 0)
 		printk(KERN_ALERT "Copy to user failed from sys_my_syscall\n");
+	else
+		printk(KERN_ALERT "Copy to user successful from sys_my_syscall\n");
 
 	return count;
-	// return 0;
 }

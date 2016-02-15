@@ -27,8 +27,6 @@ int __init wip_init(void)
 	no_tty[0] = '?';
 	no_tty[1] = '\0';
 
-	// printk(KERN_ALERT "Inserted wip_mod\n");
-
 	task = current;
 
 	for_each_process(task)
