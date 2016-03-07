@@ -6,8 +6,10 @@
 #include <linux/kmod.h>
 #include <linux/kthread.h>
 #include <linux/signal.h>
+#include <linux/string.h>
+#include <linux/uidgid.h>
 
-#define MAX_NUM_OF_DES 5
+#define MAX_NUM_OF_DES 20
 #define NUM_OF_TASKS 1024
 
 struct task_struct *new_task;
@@ -17,39 +19,28 @@ int ret;
 // recursively returns the number of descendants a parent task has
 int count_child_threads(struct task_struct *task)
 {
-	struct list_head *list;
-	struct task_struct *task1 = task;
+	struct task_struct *task1;
 	int count = 0;
-	list_for_each(list, &current->children)
-	{	
-		task1 = list_entry(list, struct task_struct, sibling);
-		count++;
-		if(&task1->children != NULL)
-		{		
-			count += count_child_threads(task1);
-		}
+	for_each_process(task1)
+	{
+		if(task1->pid > 100 && gid_eq(task1->cred->gid, task->cred->gid) && (task1->pid - task->pid) < 21)
+			count ++;
 	}
 	return count;
 }
 // recursively prints and kills the pid of each descend of task
 void kill_tree_pids(struct task_struct *task)
 {
-	struct list_head *list;
-	struct task_struct *task1 = task;
-	printk(KERN_ALERT "%d\n", task1->pid);
-		list_for_each(list, &current->children)
+	struct task_struct *task1;
+	kgid_t gid1 = task->cred->gid;
+	for_each_process(task1)
+	{
+		if(gid_eq(gid1, task1->cred->gid))
 		{
-			task1 = list_entry(list, struct task_struct, sibling);
-			if(&task1->children != NULL)
-			{
-				kill_tree_pids(task1);
-			}
-			else{
 			printk(KERN_ALERT "%d\n", task1->pid);
 			send_sig_info(SIGKILL, SEND_SIG_FORCED, task1);
-			}
 		}
-	send_sig_info(SIGKILL, SEND_SIG_FORCED, task);
+	}
 }
 
 int my_kthread_function(void *data)
