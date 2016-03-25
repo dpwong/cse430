@@ -1,0 +1,26 @@
+#!/bin/sh
+
+echo "Compiling..."
+gcc fork_binary.c -o fork_binary
+gcc fork_loop.c -o fork_loop
+gcc fork_safe.c -o fork_safe
+gcc fork_long_tail.c -o fork_long_tail
+gcc fork_stochastic.c -o fork_stochastic
+
+#load up your fork look detector
+# sudo insmod fork_detector.ko
+
+time ./fork_safe 500 > fork_safe_out.txt && ps >> fork_safe_out.txt
+
+time ./fork_loop 500 > fork_loop_out.txt 
+ps >> fork_loop_out.txt
+
+# 2^n children
+time ./fork_binary 14 > fork_binary_out.txt 
+ps >> fork_binary_out.txt
+
+time ./fork_stochastic 1 100 10 > fork_stochastic_out.txt 
+ps >> fork_stochastic_out.txt
+
+time ./fork_long_tail 2000 > fork_long_tail_out.txt 
+ps >> fork_long_tail_out.txt
