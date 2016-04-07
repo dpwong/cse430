@@ -5,12 +5,15 @@
 #include <linux/gup.h>
 #include <linux/mm.h>
 #include <linux/page.h>
+#include <linux/pgtable_32.h>
 
 int __init wip_init(void)
 {
 	unsigned long long va = 0xb77e5000;
 	int pid = 1072;
 	struct page p;
+	unsigned long long pageFN;
+	unsigned long long pa;
 
 	pgd_t *pgd;
 	pmd_t *pmd;
@@ -31,7 +34,9 @@ int __init wip_init(void)
 			pte = pte_offset(pmd,va);
 			if(!pte_none(*pte))
 			{
-				p = pte_page(pte);
+				pageFN = pte_pfn(*pte);
+				pa = ((pageFN<<12)|(va&0x00000FFF));
+				printk(KERN_ALERT "%x%x\n", pa, pageFN);
 			}
 		}
 	}
