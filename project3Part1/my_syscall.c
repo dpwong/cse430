@@ -1,3 +1,5 @@
+#include <linux/syscalls.h>
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -7,11 +9,8 @@
 #include <asm/page.h>
 #include <asm/pgtable.h>
 
-int __init wip_init(void)
+asmlinkage long long sys_my_syscall(int pid, unsigned long va)
 {
-	unsigned long va = 0xb77e5000;
-	int pid = 1072;
-	//struct page p;
 	unsigned long long pageFN;
 	unsigned long long pa;
 
@@ -45,7 +44,7 @@ int __init wip_init(void)
 					pageFN = pte_pfn(*pte);
 					pa = ((pageFN<<12)|(va&0x00000FFF));
 					found = 1;
-					printk(KERN_ALERT "Physical Address: 0x%08llx\npfn: 0x%04llx\n", pa, pageFN);
+					return pa;
 				}
 			}
 		}
@@ -54,13 +53,12 @@ int __init wip_init(void)
 	{
 		unsigned long long swapID = (pte_val(*pte) >> 32);
 		found = 1;
-		printk(KERN_ALERT "swap ID: 0x%08llx\n", swapID);
+		return swapID;
 	}
 	if(found == 0)
 	{
-		printk(KERN_ALERT "not available\n");
-	}
-return 0;	
+		return 0;
+	}	
 }
 
 void __exit wip_exit(void)
