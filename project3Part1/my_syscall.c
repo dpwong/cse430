@@ -9,7 +9,7 @@
 #include <asm/page.h>
 #include <asm/pgtable.h>
 
-asmlinkage long long sys_my_syscall(int pid, unsigned long va)
+asmlinkage long long sys_my_syscall(int pid, unsigned long long va)
 {
 	unsigned long long pageFN;
 	unsigned long long pa;
@@ -61,11 +61,3 @@ asmlinkage long long sys_my_syscall(int pid, unsigned long va)
 	}	
 }
 
-void __exit wip_exit(void)
-{
-	printk(KERN_ALERT "Removed wip_mod");
-}
-
-module_init(wip_init);
-module_exit(wip_exit);
-MODULE_LICENSE("GPL");
