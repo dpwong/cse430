@@ -1,51 +1,70 @@
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/init.h>
 #include <linux/mm.h>
-#include <asm/pgtable.h>
-#include <asm/page.h>
+#include <linux/mm_types.h>
+#include <linux/sched.h>
+#include <linux/pagemap.h>
+#include <linux/delay.h>
+#include <linux/highmem.h>
 
 int __init wss_init(void)
 {
-	int pid = 0;
+	int pid = 1065;
 	int wss = 0;
+	unsigned long va;
+	int ret;
+	int pteCheck=0;
 
 	pgd_t *pgd;
 	pmd_t *pmd;
 	pud_t *pud;
-	pte_t *pte;
+	pte_t *ptep;
 	
 	struct task_struct *task;
-	if(pid->mm != NULL)
+	for_each_process(task)
 	{
-	  	for(i=0; i <= PTRS_PER_PGD; i+=8)
-	  	{    	pgd = pgd_offset(mm,i);
-		   	if(!pgd_none(*pgd) && !pgd_bad(*pgd)
+		if(pid == task->pid)
+		{
+			if(task->mm != NULL)
 			{
-	    			for(j=0; j <= PTRS_PER_PUD; j+=8)
-	    			{
-					pmd = pmd_offset(pgd,j);
-					if(!pmd_none(*pmd) && !pmd_bad(*pmd)
-					{
-	      					for(k=0; k <= PTRS_PER_PMD; k+=8)
-	      					{
-							pud = pud_offset(pmd,k);
-							if(!pud_none(*pud) && !pud_bad(*pud))
+				struct vm_area_struct *temp = task->mm->mmap;
+				while(temp)
+				{
+				//	if(temp->vm_flags && VM_IO)
+				//	{
+						for(va = temp->vm_start; va < temp->vm_end; va+=PAGE_SIZE)
+						{
+				  			pgd = pgd_offset(task->mm,va);
+			 		  		if(pgd_none(*pgd))
+								return -1;
+							pud = pud_offset(pgd,va);
+							if(pud_none(*pud))
+								return -1;
+							pmd = pmd_offset(pud,va);
+							if(pmd_none(*pmd))
+								return -1;
+							ptep = pte_offset_map(pmd,va);
+							ret = 0;
+							pteCheck++;
+							if(pte_young(*ptep))
 							{
-								for(l=0; l <= PTRS_PER_PTE; l+=8)
-								{
-									pte = pte_offset(pud,l);
-									if(pte_young(*pte))
-									{
-										wss++;
-										pte_set(pte, pte_mkold(*pte));
-									}
-								}
+								ret = test_and_clear_bit(_PAGE_BIT_ACCESSED,												(unsigned long *) &ptep->pte);
+								wss++;
 							}
+							if(ret)
+							{
+								pte_update(task->mm, va, ptep);
+							}
+							pte_unmap(ptep);
 						}
-					}
+				//	}
+					temp = temp->vm_next;
 				}
 			}
+			printk(KERN_ALERT "%i: %i\n%i", task->pid, wss, pteCheck);
 		}
+		msleep(1000);
 	}
 	return 0;
 }
