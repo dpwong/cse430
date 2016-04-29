@@ -8,13 +8,10 @@
 #include <linux/delay.h>
 #include <linux/highmem.h>
 
-#include <linux/kthread.h>
-
-struct task_struct *kthread;
-
-int kthread_wss(void *data)
+int __init wss_init(void)
 {
-	int wss;
+	int pid = 1056;
+	int wss = 0;
 	unsigned long va;
 	int ret;
 
@@ -24,36 +21,34 @@ int kthread_wss(void *data)
 	pte_t *ptep;
 	
 	struct task_struct *task;
-	while(!kthread_should_stop())
+	for_each_process(task)
 	{
-		wss = 0;
-		for_each_process(task)
+		if(pid == task->pid)
 		{
-			wss = 0;
 			if(task->mm != NULL)
 			{
 				struct vm_area_struct *temp = task->mm->mmap;
 				while(temp)
 				{
-					if(temp->vm_flags & VM_IO){}
-					else{
+				//	if(temp->vm_flags && VM_IO)
+				//	{
 						for(va = temp->vm_start; va < temp->vm_end; va+=PAGE_SIZE)
 						{
 				  			pgd = pgd_offset(task->mm,va);
 			 		  		if(pgd_none(*pgd))
-								break;
+								return -1;
 							pud = pud_offset(pgd,va);
 							if(pud_none(*pud))
-								break;
+								return -1;
 							pmd = pmd_offset(pud,va);
 							if(pmd_none(*pmd))
-								break;
+								return -1;
 							ptep = pte_offset_map(pmd,va);
 							ret = 0;
 							if(pte_young(*ptep))
 							{
 								ret = test_and_clear_bit(_PAGE_BIT_ACCESSED,												(unsigned long *) &ptep->pte);
-									wss++;
+								wss++;
 							}
 							if(ret)
 							{
@@ -61,26 +56,19 @@ int kthread_wss(void *data)
 							}
 							pte_unmap(ptep);
 						}
-						temp = temp->vm_next;
-					}
+				//	}
+					temp = temp->vm_next;
 				}
 				printk(KERN_ALERT "%i: %i\n", task->pid, wss);
+				msleep(1000);
 			}
 		}
-	msleep(1000);
 	}
 	return 0;
 }
 
-static int __init wss_init(void)
+void __exit wss_exit(void)
 {
-	int data = 20;
-	kthread = kthread_run(&kthread_wss, (void*)data, "kthread_wss");
-	return 0;
-}
-static void __exit wss_exit(void)
-{
-	kthread_stop(kthread);
 	printk(KERN_ALERT "Removed wss");
 }
 

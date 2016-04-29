@@ -12,11 +12,12 @@
 
 struct task_struct *kthread;
 
-int kthread_wss(void *data)
+int kthread_twss(void *data)
 {
-	int wss;
+	int twss;
 	unsigned long va;
 	int ret;
+	int wss;
 
 	pgd_t *pgd;
 	pmd_t *pmd;
@@ -26,7 +27,7 @@ int kthread_wss(void *data)
 	struct task_struct *task;
 	while(!kthread_should_stop())
 	{
-		wss = 0;
+		twss = 0;
 		for_each_process(task)
 		{
 			wss = 0;
@@ -36,7 +37,8 @@ int kthread_wss(void *data)
 				while(temp)
 				{
 					if(temp->vm_flags & VM_IO){}
-					else{
+					else
+					{
 						for(va = temp->vm_start; va < temp->vm_end; va+=PAGE_SIZE)
 						{
 				  			pgd = pgd_offset(task->mm,va);
@@ -53,7 +55,7 @@ int kthread_wss(void *data)
 							if(pte_young(*ptep))
 							{
 								ret = test_and_clear_bit(_PAGE_BIT_ACCESSED,												(unsigned long *) &ptep->pte);
-									wss++;
+								wss++;
 							}
 							if(ret)
 							{
@@ -61,29 +63,33 @@ int kthread_wss(void *data)
 							}
 							pte_unmap(ptep);
 						}
-						temp = temp->vm_next;
 					}
+					temp = temp->vm_next;
 				}
-				printk(KERN_ALERT "%i: %i\n", task->pid, wss);
+			//	printk(KERN_ALERT "%i: %i\n", task->pid, wss);
 			}
+			twss += wss;
 		}
+	printk(KERN_ALERT "Total WSS: %i\n",twss);
+	if(twss > 464225)
+		printk(KERN_ALERT "Kernel Alert!");
 	msleep(1000);
 	}
 	return 0;
 }
 
-static int __init wss_init(void)
+static int __init twss_init(void)
 {
 	int data = 20;
-	kthread = kthread_run(&kthread_wss, (void*)data, "kthread_wss");
+	kthread = kthread_run(&kthread_twss, (void*)data, "kthread_twss");
 	return 0;
 }
-static void __exit wss_exit(void)
+static void __exit twss_exit(void)
 {
 	kthread_stop(kthread);
-	printk(KERN_ALERT "Removed wss");
+	printk(KERN_ALERT "Removed twss");
 }
 
-module_init(wss_init);
-module_exit(wss_exit);
+module_init(twss_init);
+module_exit(twss_exit);
 MODULE_LICENSE("GPL");
