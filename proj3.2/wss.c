@@ -14,9 +14,9 @@ struct task_struct *kthread;
 
 int kthread_wss(void *data)
 {
-	int wss;
 	unsigned long va;
 	int ret;
+	int wss;
 
 	pgd_t *pgd;
 	pmd_t *pmd;
@@ -26,7 +26,7 @@ int kthread_wss(void *data)
 	struct task_struct *task;
 	while(!kthread_should_stop())
 	{
-		wss = 0;
+		printk(KERN_INFO "Checking process' WSS.\n");
 		for_each_process(task)
 		{
 			wss = 0;
@@ -36,7 +36,8 @@ int kthread_wss(void *data)
 				while(temp)
 				{
 					if(temp->vm_flags & VM_IO){}
-					else{
+					else
+					{
 						for(va = temp->vm_start; va < temp->vm_end; va+=PAGE_SIZE)
 						{
 				  			pgd = pgd_offset(task->mm,va);
@@ -53,7 +54,7 @@ int kthread_wss(void *data)
 							if(pte_young(*ptep))
 							{
 								ret = test_and_clear_bit(_PAGE_BIT_ACCESSED,												(unsigned long *) &ptep->pte);
-									wss++;
+								wss++;
 							}
 							if(ret)
 							{
@@ -61,10 +62,10 @@ int kthread_wss(void *data)
 							}
 							pte_unmap(ptep);
 						}
-						temp = temp->vm_next;
 					}
+					temp = temp->vm_next;
 				}
-				printk(KERN_ALERT "%i: %i\n", task->pid, wss);
+				printk(KERN_INFO "%i: %i\n", task->pid, wss);
 			}
 		}
 	msleep(1000);
@@ -81,7 +82,7 @@ static int __init wss_init(void)
 static void __exit wss_exit(void)
 {
 	kthread_stop(kthread);
-	printk(KERN_ALERT "Removed wss");
+	printk(KERN_ALERT "Removed wss\n");
 }
 
 module_init(wss_init);

@@ -66,13 +66,12 @@ int kthread_twss(void *data)
 					}
 					temp = temp->vm_next;
 				}
-			//	printk(KERN_ALERT "%i: %i\n", task->pid, wss);
 			}
 			twss += wss;
 		}
-	printk(KERN_ALERT "Total WSS: %i\n",twss);
-	if(twss > 464225)
-		printk(KERN_ALERT "Kernel Alert!");
+	printk(KERN_INFO "Total WSS: %i\n",twss);
+	if(twss > (totalram_pages * 9)/10)
+		printk(KERN_ALERT "Kernel Alert!\n");
 	msleep(1000);
 	}
 	return 0;
@@ -87,7 +86,7 @@ static int __init twss_init(void)
 static void __exit twss_exit(void)
 {
 	kthread_stop(kthread);
-	printk(KERN_ALERT "Removed twss");
+	printk(KERN_ALERT "Removed twss\n");
 }
 
 module_init(twss_init);
